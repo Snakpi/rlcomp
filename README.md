@@ -1,45 +1,5 @@
-***(English version, Vietnamese below)***
+Submission for an RL competition involving gold mining agents.
 
-# DUMMY TESTING SERVER
-This is a server that assists players to check their agents' running results.
- 
-## Descriptions
-The Server has been simulated for the player to run on a map named Verify, which is used to verify the player’s code when uploading the source code to the system.
- 
-## How to Run
+A3C agent seems to converge at around -15 points in rewards. Bots are still based upon heuristics. Will incorporate smarter bots which are also actor-critic agents. The idea right now is to use parameters of winning networks per local environment to update the global network, then synchronize. The bots (who are also AC agents) will then take on the 2nd best agents' parameters per local environment and the games start again.
 
-Start server: 
-**Python3 DUMMY_SERVER. py {Port}**
- 
-Example: **Python3 DUMMY_SERVER. PY 1234**
- 
-Run client:
-**./run.sh localhost {port}**
- 
-Example: **./run.sh localhost 1234**
- 
-## Note
-This is only a simulation server to help players quickly check the agent's quality, but does not guarantee accurate results in real-world environments.
-
-
-
-# DUMMY TESTING SERVER
-Đây là phần giả lập server giúp cho người chơi có thể kiểm tra kết quả chạy của agent của mình.
-
-## Mô tả
-Server đã được giả lập để người chơi có thể chạy trên bản đồ Verify - là bản đồ được dùng đề verify code của người chơi khi upload mã nguồn lên hệ thống.
-
-## Cách chạy
-
-Khởi động server: 
-**python3 DUMMY_SERVER.py {port}**
-
-Ví dụ: **python3 DUMMY_SERVER.py 1234**
-
-Chạy client:
-**./run.sh localhost {port}**
-
-Ví dụ: **./run.sh localhost 1234**
-
-## Lưu ý
-Đây chỉ là bản giả lập server để giúp người chơi kiểm tra nhanh chất lượng của agent, không đảm bảo kết quả chạy chính xác trên môi trường thật.
+Might also incorporate an ML-fused prediction scheme to predict the states of other players and use that to make actions. The idea is that the main agent must learn to consider the other agents when making its own prediction to go for gold or not. 
