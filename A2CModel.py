@@ -52,27 +52,29 @@ class Net(nn.Module):
         self.distribution = torch.distributions.Categorical
 
     def forward(self, x):
-        a1 = F.relu6(self.al1(x))
-        a2 = F.relu6(self.al2(a1))
-        a3 = F.relu6(self.al3(a2))
-        a4 = F.relu6(self.al4(a3))
-        a_probs = F.softmax(a4, dim=1)
+        a1 = F.relu(self.al1(x))
+        a2 = F.relu(self.al2(a1))
+        a3 = F.relu(self.al3(a2))
+        a4 = F.relu(self.al4(a3))
+        a_probs = F.softmax(a4, dim=0)
 
-        c1 = F.relu6(self.cl1(x))
-        c2 = F.relu6(self.cl2(c1))
-        c3 = F.relu6(self.cl3(c2))
+        c1 = F.relu(self.cl1(x))
+        c2 = F.relu(self.cl2(c1))
+        c3 = F.relu(self.cl3(c2))
         v = F.relu(self.cl4(c3))
 
         return a_probs, v
 
     def choose_action(self, s, epsilon=.3):
         self.training = False
-        actions, _ = self.forward(s)
+        a_probs, _ = self.forward(s)
         sample_0_1 = np.random.sample()
         if sample_0_1 > epsilon:
-            a = np.argmax(list(a_probs))
+            a_ps_np = a_probs.detach().numpy()
+            a = np.argmax(a_ps_np)
         else:
-            a = np.random.choice(len(list(a_probs)), 1, p=list(a_probs)) #### Semi-greedy epsilon-greedy algorithm (explores the actions by softmax probs)
+            a = np.random.choice(a_probs.shape[0], 1).item()
+            #a = np.random.choice(a_probs.shape[0], 1, p=a_probs.tolist()).item() #### Semi-greedy epsilon-greedy algorithm (explores the actions by softmax probs)
         return a
 
         
@@ -105,13 +107,21 @@ class Worker(mp.Process):
 
         while self.g_ep.value < MAX_EP:
             try:
+              mapID = np.random.randint(1, 6) #Choosing a map ID from 5 maps in Maps folder randomly
+              posID_x = np.random.randint(MAP_MAX_X) #Choosing a initial position of the DQN agent on X-axes randomly
+              posID_y = np.random.randint(MAP_MAX_Y) #Choosing a initial position of the DQN agent on Y-axes randomly
+              #Creating a request for initializing a map, initial position, the initial energy, and the maximum number of steps of the DQN agent
+              request = ("map" + str(mapID) + "," + str(posID_x) + "," + str(posID_y) + ",50,100") 
+              #Send the request to the game environment (GAME_SOCKET_DUMMY.py)
+              self.env.send_map_info(request)
               self.env.reset()
               s = self.env.get_state()
+              print(s.shape)
               buffer_s, buffer_a, buffer_r = [], [], []
               ep_r = 0.
               for t in range(MAX_EP_STEP):
                   a = self.lnet.choose_action(v_wrap(s[None, :]), .5)
-                  self.env.step(a.clip(-2, 2))
+                  self.env.step(str(a))
                   s_ = self.env.get_state()
                   r = self.env.get_reward()
                   done = self.env.check_terminate()
@@ -149,19 +159,22 @@ class Worker(mp.Process):
             'gnet state_dict': self.gnet.state_dict(),
             'opt state_dict': self.opt.state_dict(),
             }, self.name + '.pth')
+    
+    def epsilon_update(self, drop_rate):
+      pass
 
 ########################################################################################################
 
 
 
 # Create header for saving learning file
-'''
+"""
 now = datetime.datetime.now() #Getting the latest datetime
 header = ["Ep", "Step", "Reward", "Total_reward", "Action", "Epsilon", "Done", "Termination_Code"] #Defining header for the save file
 filename = "Data/data_" + now.strftime("%Y%m%d-%H%M") + ".csv" 
 with open(filename, 'w') as f:
     pd.DataFrame(columns=header).to_csv(f, encoding='utf-8', index=False, header=True)
-'''
+"""
 
 # Initialize environment
 HOST = "localhost"
